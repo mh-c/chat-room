@@ -1,0 +1,110 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Socket.IO chat</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font: 13px Helvetica, Arial; }
+      form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
+      form select { width: 10% }
+      form input { border: 0; padding: 10px; width: 80%; margin-right: .5%; }
+      form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
+      #n { position: absolute; z-index: 1000; width: 30%; left: 35%; background-color: transparent; text-align: center; text-decoration: underline;}
+      #messages { list-style-type: none; margin: 0; padding: 0; top: 0}
+      #messages li { padding: 5px 10px; }
+      #messages li:nth-child(odd) { background: #eee; }
+    </style>
+  </head>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script>
+    var username = prompt("Enter your name to continue");
+    var timeoutid = '';
+    var typer = '';
+
+    $(function(){
+      var socket = io();
+      // Identify self once connected
+      socket.emit('identity', username);
+
+      // Send request
+      $('form').submit(function(e){
+        e.preventDefault(); // prevents page reloading
+        var msg = $('#m').val();
+        socket.emit('chat message', $('#pmuser').val(), msg);
+        if($('#pmuser').val() == "To All"){
+          $('#messages').append($('<li>').text(msg).css("text-align", "right"));
+        }else{
+          $('#messages').append($('<li>').text('(To ' + $('#pmuser').val() + ') ' + msg).css("text-align", "right"));
+        }
+        $('#m').val('');
+        return false;
+      });
+      
+      // Append chat message, if message came from most recent typer, clear the typing status
+      socket.on('chat message', function(from, msg){
+        $('#messages').append($('<li>').text(from + ": " + msg));
+        if(from == typer){
+          $('#n').text('');
+          typer = '';
+        }
+      });
+
+      // Append when user connect & disconnect
+      socket.on('user connect', (username, action, users) => {
+        if(action == 'connect'){
+          $('#messages').append($('<li>').append($('<b>').text(username + ' has joined the chat.')));
+        }else{
+          $('#messages').append($('<li>').append($('<b>').text(username + ' has left the chat.')));
+        }
+        updatePMUsers(users);
+      });
+
+      // Send while typing
+      $('#m').keypress(function(){
+        socket.emit('typing', username);
+      });
+      
+      // Display typing message and clear after 3 seconds
+      socket.on('typing', function(username){
+        typer = username;
+        $('#n').text(username + ' is typing...');
+        clearTimeout(timeoutid);
+        timeoutid = setTimeout(() => {
+          $('#n').text('');
+        }, 20000);
+      });
+
+      // Receive private message
+      socket.on('private message', (from, msg) => {
+        $('#messages').append($('<li>').text(from + " (privately): " + msg));
+        if(from == typer){
+          $('#n').text('');
+          typer = '';
+        }
+      });
+
+      socket.on('update pmusers', (users) => {
+        updatePMUsers(users);
+      });
+      
+      function updatePMUsers(users){
+        $('#pmuser').text('');
+        $('#pmuser').append($('<option>').text('To All').attr('value', 'To All'));
+        for(user of users.filter(x => x!=username)){
+          $('#pmuser').append($('<option>').text(user).attr('value', user));
+        }
+      };
+    });
+  </script>
+
+  <body>
+    <p id="n"></p>
+    <ul id="messages"></ul>
+    <form action="">
+      <select id="pmuser"></select>
+      <input id="m" autocomplete="off" /><button>Send</button>
+    </form>
+  </body>
+</html>
