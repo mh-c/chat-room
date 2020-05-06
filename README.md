@@ -37,3 +37,5 @@ Screenshot:
 * Username validation at server side to avoid duplicate, prevent code injection etc
 * Username re-entry upon reconnection when server restarted
 * Exception handling on server code to prevent shutdown
+* Message-display window to auto-scrolling and not touching text-input box
+* Mobile / Other resolutions compatibilities 
