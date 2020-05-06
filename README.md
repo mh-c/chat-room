@@ -1,5 +1,7 @@
 # Web Chat-room with Socket.io
 
+Live demo deployed on [herokuapp](http://liao-tian-shi.herokuapp.com/) (Allow sometime for Dynos to start up)
+
 A simple web-based chat room following [socket.io get-started guide](https://socket.io/get-started/chat/)
 with following additional functionality implemented:
 * Boardcast a message to online users when someone connected / disconnected
@@ -35,3 +37,5 @@ Screenshot:
 * Username validation at server side to avoid duplicate, prevent code injection etc
 * Username re-entry upon reconnection when server restarted
 * Exception handling on server code to prevent shutdown
+* Message-display window to auto-scrolling and not touching text-input box
+* Mobile / Other resolutions compatibilities 
